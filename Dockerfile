@@ -1,6 +1,8 @@
 ARG BASE_IMAGE="eclipse-temurin:25-jre-ubi10-minimal"
 ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.1.9"
 
+FROM ${DOWNLOADER_IMAGE} as downloader
+
 FROM ${BASE_IMAGE} AS base
 
 ARG IMAGE_VERSION
@@ -10,7 +12,7 @@ RUN microdnf install -y unzip jq curl && \
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-COPY --from=${DOWNLOADER_IMAGE} /bin/hytale-downloader /usr/local/bin
+COPY --from=downloader /bin/hytale-downloader /usr/local/bin
 
 USER hytale
 
