@@ -12,6 +12,8 @@ ACCEPT_EARLY_PLUGINS="0"
 DISABLE_SENTRY="0"
 ALLOW_OP="1"
 ENABLE_BACKUPS="0"
+BACKUP_FREQUENCY="60"
+GAME_PROFILE=""
 JVM_ARGS=""
 
 # Function to extract downloaded server files
