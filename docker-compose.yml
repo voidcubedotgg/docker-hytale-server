@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  hytale-server:
+    image: voidcube/hytale-server
+    container_name: hytale-server
+    restart: unless-stopped
+    ports:
+      - "5520:5520/udp"
+    volumes:
+      - ./hytale-data:/data
+    stdin_open: true
+    tty: true
