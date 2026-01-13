@@ -1,7 +1,7 @@
 ARG BASE_IMAGE="eclipse-temurin:25-jre-ubi10-minimal"
 ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.1.9"
 
-FROM ${DOWNLOADER_IMAGE} as downloader
+FROM ${DOWNLOADER_IMAGE} AS downloader
 
 FROM ${BASE_IMAGE} AS base
 
