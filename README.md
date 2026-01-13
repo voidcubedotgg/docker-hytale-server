@@ -5,7 +5,7 @@ Docker image for the Hytale server application.
 ## Usage
 
 ```bash
-docker run -it -p "5520:5520/udp" -v hytale-data:/data voidcube/hytale-server
+docker run -it -d -p "5520:5520/udp" -v hytale-data:/data voidcube/hytale-server
 
 ```
 
