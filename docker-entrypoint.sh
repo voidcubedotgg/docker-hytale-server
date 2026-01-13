@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 DOWNLOADER="hytale-downloader"
 AUTH_CACHE_FILE=".hytale-auth-tokens.json"
@@ -230,17 +230,7 @@ perform_authentication() {
     save_auth_tokens
 }
 
-# Check if credentials file exists, if not run the updater
-if [ ! -f ".hytale-downloader-credentials.json" ]; then
-    echo "Credentials file not found, running initial setup..."
-    echo "Starting Hytale downloader..."
-    $DOWNLOADER -download-path server.zip
-    extract_server_files
-fi
-
-
-
- Check if server files were downloaded correctly
+# Check if server files were downloaded correctly
 if [ ! -f "HytaleServer.jar" ]; then
     echo "Error: HytaleServer.jar not found!"
     echo "Server files were not downloaded correctly."
@@ -258,9 +248,6 @@ else
 fi
 
 echo "Starting Hytale server..."
-
-export HYTALE_SERVER_SESSION_TOKEN=${SESSION_TOKEN}
-export HYTALE_SERVER_IDENTITY_TOKEN=${IDENTITY_TOKEN}
 
 # Build the Java command
 JAVA_CMD="java"
@@ -310,14 +297,12 @@ if [ "${ENABLE_BACKUPS}" = "1" ]; then
 fi
 
 # Add session tokens and owner UUID
-#JAVA_CMD="${JAVA_CMD} --session-token ${SESSION_TOKEN}"
-#JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
-#JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
+JAVA_CMD="${JAVA_CMD} --session-token ${SESSION_TOKEN}"
+JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
+JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
 
 # Add bind address
 JAVA_CMD="${JAVA_CMD} --bind '0.0.0.0:${SERVER_PORT:-5520}'"
-
-echo $JAVA_CMD
 
 # Execute the command
 eval $JAVA_CMD

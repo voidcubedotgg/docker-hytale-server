@@ -1,14 +1,16 @@
 ARG BASE_IMAGE="eclipse-temurin:25-jre-ubi10-minimal"
+ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.1.9"
 
 FROM ${BASE_IMAGE} AS base
 
 ARG IMAGE_VERSION
 
-RUN microdnf install -y jq
+RUN microdnf install -y unzip jq curl && \
+    groupadd -r hytale && useradd -r -g hytale hytale
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-COPY --from=voidcube/hytale-downloader:2026.1.9 /bin/hytale-downloader /usr/local/bin
+COPY --from=${DOWNLOADER_IMAGE} /bin/hytale-downloader /usr/local/bin
 
 USER hytale
 
@@ -25,4 +27,5 @@ LABEL org.opencontainers.image.title="Hytale Server Image" \
       org.opencontainers.image.url="https://github.com/voidcubedotgg/hytale-server-docker" \
       org.opencontainers.image.source="https://github.com/voidcubedotgg/hytale-server-docker" \
       org.opencontainers.image.licenses="MIT"
+
 EXPOSE 5520
