@@ -1,8 +1,18 @@
 #!/bin/bash
 
+set -euo pipefail
+
 DOWNLOADER="hytale-downloader"
 AUTH_CACHE_FILE=".hytale-auth-tokens.json"
 ASSET_PACK="Assets.zip"
+LEVERAGE_AHEAD_OF_TIME_CACHE="1"
+ACCEPT_EARLY_PLUGINS="0"
+SERVER_MEMORY="4096"
+ACCEPT_EARLY_PLUGINS="0"
+DISABLE_SENTRY="0"
+ALLOW_OP="1"
+ENABLE_BACKUPS="0"
+JVM_ARGS=""
 
 # Function to extract downloaded server files
 extract_server_files() {
@@ -302,7 +312,7 @@ JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
 JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
 
 # Add bind address
-JAVA_CMD="${JAVA_CMD} --bind '0.0.0.0:${SERVER_PORT:-5520}'"
+JAVA_CMD="${JAVA_CMD} --bind 0.0.0.0:${SERVER_PORT:-5520}"
 
 # Execute the command
-eval $JAVA_CMD
+exec $JAVA_CMD
