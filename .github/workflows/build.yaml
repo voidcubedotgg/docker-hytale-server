@@ -41,6 +41,7 @@ jobs:
                   tags: ${{ steps.meta.outputs.tags }}
                   build-args: |
                       BASE_IMAGE=${{ vars.BASE_IMAGE }}
+                      IMAGE_VERSION=${{ steps.meta.outputs.version }}
                   annotations: ${{ steps.meta.outputs.annotations }}
                   provenance: true
                   sbom: true
