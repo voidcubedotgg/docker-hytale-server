@@ -5,7 +5,7 @@ Docker image for the Hytale server application.
 ## Usage
 
 ```bash
-docker run -it -d -p "5520:5520/udp" -v hytale-data:/data voidcube/hytale-server
+docker run -it -d -p "5520:5520/udp" -v ./hytale-data:/data voidcube/hytale-server
 
 ```
 
@@ -18,8 +18,6 @@ docker build -t voidcube/hytale-server .
 ## Docker Compose
 
 ```bash
-version: '3.8'
-
 services:
   hytale-server:
     image: voidcube/hytale-server
@@ -35,15 +33,8 @@ services:
 Start server
 
 ```bash
-docker-compose up
+docker-compose up -d
 ```
-
-or
-
-```bash
-docker compose up
-```
-
 
 ### Credits
 
