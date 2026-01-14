@@ -15,6 +15,8 @@ ENABLE_BACKUPS="0"
 BACKUP_FREQUENCY="60"
 GAME_PROFILE=""
 JVM_ARGS=""
+# HYTALE_SERVER_IDENTITY_TOKEN
+# HYTALE_SERVER_SESSION_TOKEN
 
 # Function to extract downloaded server files
 extract_server_files() {
@@ -72,6 +74,16 @@ check_cached_tokens() {
         return 0
     fi
     return 1
+}
+
+# Function to check if envs from tokens exist
+check_token_envs() {
+    if [[ -z "HYTALE_SERVER_SESSION_TOKEN" && -z "HYTALE_SERVER_SESSION_TOKEN" ]]; then
+         echo "✓ Found authentication tokens in system enviroment"
+         return 1
+    fi
+
+    return 0
 }
 
 # Function to load cached tokens
@@ -254,6 +266,8 @@ fi
 # Check for cached authentication tokens
 if check_cached_tokens && load_cached_tokens; then
     echo "Using cached authentication - skipping login prompt"
+elif check_token_envs; then
+    echo "Using envs for authentication - skipping login prompt"
 else
     # Perform full authentication if no valid cache exists
     perform_authentication
