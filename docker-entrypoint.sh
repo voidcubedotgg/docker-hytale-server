@@ -15,8 +15,6 @@ ENABLE_BACKUPS="0"
 BACKUP_FREQUENCY="60"
 GAME_PROFILE=""
 JVM_ARGS=""
-# HYTALE_SERVER_IDENTITY_TOKEN
-# HYTALE_SERVER_SESSION_TOKEN
 
 # Function to extract downloaded server files
 extract_server_files() {
