@@ -15,6 +15,36 @@ docker run -it -d -p "5520:5520/udp" -v hytale-data:/data voidcube/hytale-server
 docker build -t voidcube/hytale-server .
 ```
 
+## Docker Compose
+
+```bash
+version: '3.8'
+
+services:
+  hytale-server:
+    image: voidcube/hytale-server
+    container_name: hytale-server
+    restart: unless-stopped
+    ports:
+      - "5520:5520/udp"
+    volumes:
+      - ./hytale-data:/data
+    stdin_open: true
+    tty: true
+```
+Start server
+
+```bash
+docker-compose up
+```
+
+or
+
+```bash
+docker compose up
+```
+
+
 ### Credits
 
 This project incorporates code from **NATroutter/egg-hytale**  
