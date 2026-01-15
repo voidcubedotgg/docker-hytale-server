@@ -74,6 +74,16 @@ check_cached_tokens() {
     return 1
 }
 
+# Function to check if envs from tokens exist
+check_token_envs() {
+    if [[ -z "HYTALE_SERVER_SESSION_TOKEN" && -z "HYTALE_SERVER_SESSION_TOKEN" ]]; then
+         echo "✓ Found authentication tokens in system enviroment"
+         return 1
+    fi
+
+    return 0
+}
+
 # Function to load cached tokens
 load_cached_tokens() {
     ACCESS_TOKEN=$(jq -r '.access_token' "$AUTH_CACHE_FILE")
@@ -254,6 +264,8 @@ fi
 # Check for cached authentication tokens
 if check_cached_tokens && load_cached_tokens; then
     echo "Using cached authentication - skipping login prompt"
+elif check_token_envs; then
+    echo "Using envs for authentication - skipping login prompt"
 else
     # Perform full authentication if no valid cache exists
     perform_authentication
