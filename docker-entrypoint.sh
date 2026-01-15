@@ -119,14 +119,11 @@ check_token_envs() {
 # Function to load cached tokens
 load_cached_tokens() {
     ACCESS_TOKEN=$(jq -r '.access_token' "$AUTH_CACHE_FILE")
-    SESSION_TOKEN=$(jq -r '.session_token' "$AUTH_CACHE_FILE")
-    IDENTITY_TOKEN=$(jq -r '.identity_token' "$AUTH_CACHE_FILE")
+    REFRESH_TOKEN=$(jq -r '.refresh_token' "$AUTH_CACHE_FILE")
     PROFILE_UUID=$(jq -r '.profile_uuid' "$AUTH_CACHE_FILE")
     
     # Validate all required tokens are present
     if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ] || \
-       [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ] || \
-       [ -z "$IDENTITY_TOKEN" ] || [ "$IDENTITY_TOKEN" = "null" ] || \
        [ -z "$PROFILE_UUID" ] || [ "$PROFILE_UUID" = "null" ]; then
         echo "Error: Incomplete cached tokens, re-authenticating..."
         rm "$AUTH_CACHE_FILE"
@@ -143,8 +140,6 @@ save_auth_tokens() {
 {
   "access_token": "$ACCESS_TOKEN",
   "refresh_token": "$REFRESH_TOKEN",
-  "session_token": "$SESSION_TOKEN",
-  "identity_token": "$IDENTITY_TOKEN",
   "profile_uuid": "$PROFILE_UUID",
   "timestamp": $(date +%s)
 }
@@ -168,40 +163,31 @@ refresh_authentication() {
         echo ""
     fi
 
-    if is_token_expired $SESSION_TOKEN || is_token_expired $IDENTITY_TOKEN; then
-        echo "Refreshing Game session"
-        SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/refresh" \
-          -H "Authorization: Bearer $SESSION_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "{\"uuid\": \"${PROFILE_UUID}\"}")
+    save_auth_tokens
+}
 
-
-        if [ "$SESSION_RESPONSE" = "invalid token" ]; then
-            echo "Token is invalid creating new session instead"
-            SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/new" \
-               -H "Authorization: Bearer $ACCESS_TOKEN" \
-               -H "Content-Type: application/json" \
-               -d "{\"uuid\": \"${PROFILE_UUID}\"}")
-        fi  
-        # Validate JSON response
-        if ! echo "$SESSION_RESPONSE" | jq empty 2>/dev/null; then
-            echo "Error: Invalid JSON response from game session refresh"
-            echo "Response: $SESSION_RESPONSE"
-        fi
-
-        # Extract session and identity tokens
-        SESSION_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.sessionToken')
-        IDENTITY_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.identityToken')
-
-        if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
-            echo "Error: Failed to refresh game server session"
-            echo "Response: $SESSION_RESPONSE"
-            exit 1
-        fi
-
-        echo "✓ Game server session refreshed successfully!"
-        echo ""
+create_game_session() {
+    echo "Creating Game session"
+    SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/new" \
+       -H "Authorization: Bearer $ACCESS_TOKEN" \
+       -H "Content-Type: application/json" \
+       -d "{\"uuid\": \"${PROFILE_UUID}\"}")
+    
+    # Validate JSON response
+    if ! echo "$SESSION_RESPONSE" | jq empty 2>/dev/null; then
+        echo "Error: Invalid JSON response from game session refresh"
+        echo "Response: $SESSION_RESPONSE"
     fi
+    # Extract session and identity tokens
+    SESSION_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.sessionToken')
+    IDENTITY_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.identityToken')
+    if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
+        echo "Error: Failed to refresh game server session"
+        echo "Response: $SESSION_RESPONSE"
+        exit 1
+    fi
+    echo "✓ Game session created successfully!"
+    echo ""
 }
 
 # Function to perform full authentication
@@ -304,36 +290,6 @@ perform_authentication() {
         echo "✓ Using default profile: $PROFILE_USERNAME (UUID: $PROFILE_UUID)"
     fi
 
-    echo ""
-
-    # Create game server session
-    echo "Creating game server session..."
-
-    SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/new" \
-      -H "Authorization: Bearer $ACCESS_TOKEN" \
-      -H "Content-Type: application/json" \
-      -d "{\"uuid\": \"${PROFILE_UUID}\"}")
-
-    # Validate JSON response
-    if ! echo "$SESSION_RESPONSE" | jq empty 2>/dev/null; then
-        echo "Error: Invalid JSON response from game session creation"
-        echo "Response: $SESSION_RESPONSE"
-        exit 1
-    fi
-
-    # Extract session and identity tokens
-    SESSION_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.sessionToken')
-    IDENTITY_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.identityToken')
-
-    if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
-        echo "Error: Failed to create game server session"
-        echo "Response: $SESSION_RESPONSE"
-        exit 1
-    fi
-
-    echo "✓ Game server session created successfully!"
-    echo ""
-    
     # Save tokens for future use
     save_auth_tokens
 }
@@ -381,6 +337,9 @@ else
     # Perform full authentication if no valid cache exists
     perform_authentication
 fi
+
+# Create game session
+create_game_session
 
 echo "Starting Hytale server..."
 
