@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+GAME_VERSION_CACHE_FILE=".game_version"
 DOWNLOADER="hytale-downloader"
 AUTH_CACHE_FILE=".hytale-auth-tokens.json"
 ASSET_PACK="Assets.zip"
@@ -15,6 +16,35 @@ ENABLE_BACKUPS="0"
 BACKUP_FREQUENCY="60"
 GAME_PROFILE=""
 JVM_ARGS=""
+
+# Decode base64 url
+base64url_decode() {
+  local b64="$1"
+  while (( ${#b64} % 4 != 0 )); do b64+="="; done
+  echo "$b64" | tr '_-' '/+' | base64 -d 2>/dev/null
+}
+
+# Validate is JWT token expired
+is_token_expired() {
+    local token="$1"
+
+    if [ -z "$token" ]; then
+        echo "Error: Can't validate token exipry. Token not provided."
+    fi
+
+    IFS='.' read -r header payload sig <<< "$token"
+
+    payload_json=$(base64url_decode "$payload")
+
+    exp=$(echo "$payload_json" | jq -r '.exp')
+    now=$(date +%s)
+
+    if [ "$((now + 5*60))" -lt "$exp" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
 
 # Function to extract downloaded server files
 extract_server_files() {
@@ -37,8 +67,8 @@ extract_server_files() {
         # Move contents from Server folder to current directory
         if [ -d "Server" ]; then
             echo "Moving server files from Server directory..."
-            mv Server/* .
-            rmdir Server
+            cp -r Server/* .
+            rm -r Server
             echo "✓ Server files moved to root directory."
         fi
 
@@ -51,6 +81,8 @@ extract_server_files() {
         exit 1
     fi
 }
+
+
 
 # Function to check if cached tokens exist
 check_cached_tokens() {
@@ -76,11 +108,11 @@ check_cached_tokens() {
 
 # Function to check if envs from tokens exist
 check_token_envs() {
-    if [[ -z "HYTALE_SERVER_SESSION_TOKEN" && -z "HYTALE_SERVER_SESSION_TOKEN" ]]; then
-         echo "✓ Found authentication tokens in system enviroment"
+    if [[ ! -z "HYTALE_SERVER_SESSION_TOKEN" && ! -z "HYTALE_SERVER_SESSION_TOKEN" ]]; then
          return 1
     fi
 
+    echo "✓ Found authentication tokens in system enviroment"
     return 0
 }
 
@@ -110,6 +142,7 @@ save_auth_tokens() {
     cat > "$AUTH_CACHE_FILE" << EOF
 {
   "access_token": "$ACCESS_TOKEN",
+  "refresh_token": "$REFRESH_TOKEN",
   "session_token": "$SESSION_TOKEN",
   "identity_token": "$IDENTITY_TOKEN",
   "profile_uuid": "$PROFILE_UUID",
@@ -117,6 +150,58 @@ save_auth_tokens() {
 }
 EOF
     echo "✓ Authentication tokens cached for future use"
+}
+
+refresh_authentication() {
+    if is_token_expired $ACCESS_TOKEN; then
+        echo "Refreshing Access Token"
+       TOKEN_RESPONSE=$(curl -s -X POST "https://oauth.accounts.hytale.com/oauth2/token" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "client_id=hytale-server" \
+        -d "grant_type=refresh_token" \
+        -d "refresh_token=$REFRESH_TOKEN")
+
+        ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r ".access_token")
+        REFRESH_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r ".refresh_token")
+
+        echo "✓ Access token refreshed successfully!"
+        echo ""
+    fi
+
+    if is_token_expired $SESSION_TOKEN || is_token_expired $IDENTITY_TOKEN; then
+        echo "Refreshing Game session"
+        SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/refresh" \
+          -H "Authorization: Bearer $SESSION_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "{\"uuid\": \"${PROFILE_UUID}\"}")
+
+
+        if [ "$SESSION_RESPONSE" = "invalid token" ]; then
+            echo "Token is invalid creating new session instead"
+            SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/new" \
+               -H "Authorization: Bearer $ACCESS_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "{\"uuid\": \"${PROFILE_UUID}\"}")
+        fi  
+        # Validate JSON response
+        if ! echo "$SESSION_RESPONSE" | jq empty 2>/dev/null; then
+            echo "Error: Invalid JSON response from game session refresh"
+            echo "Response: $SESSION_RESPONSE"
+        fi
+
+        # Extract session and identity tokens
+        SESSION_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.sessionToken')
+        IDENTITY_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.identityToken')
+
+        if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
+            echo "Error: Failed to refresh game server session"
+            echo "Response: $SESSION_RESPONSE"
+            exit 1
+        fi
+
+        echo "✓ Game server session refreshed successfully!"
+        echo ""
+    fi
 }
 
 # Function to perform full authentication
@@ -176,6 +261,7 @@ perform_authentication() {
         else
             # Successfully authenticated
             ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+            REFRESH_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.refresh_token')
             echo ""
             echo "✓ Authentication successful!"
             echo ""
@@ -252,18 +338,43 @@ perform_authentication() {
     save_auth_tokens
 }
 
+check_game_version() {
+    if [ ! -f "$GAME_VERSION_CACHE_FILE" ]; then
+        echo "Game version file not found"
+        return 0
+    fi
+
+    GAME_VERSION=$(cat $GAME_VERSION_CACHE_FILE)
+    if [ "$GAME_VERSION" != $(hytale-downloader -print-version) ]; then
+        echo "Game version is outdated!"
+        return 0
+    fi
+
+    echo "✓ Game version is up to date"
+    return 1
+}
+
+save_game_version() {
+   GAME_VERSION=$(hytale-downloader -print-version)
+   echo "$GAME_VERSION" > $GAME_VERSION_CACHE_FILE
+   echo "✓ Game version saved successfully!"
+   echo ""
+}
+
 # Check if server files were downloaded correctly
-if [ ! -f "HytaleServer.jar" ]; then
-    echo "Error: HytaleServer.jar not found!"
-    echo "Server files were not downloaded correctly."
-    echo "Starting Hytale downloader..."
-    $DOWNLOADER -download-path server.zip
+if check_game_version; then
+    if [ ! -f "server.zip" ]; then
+        echo "Starting Hytale downloader..."
+        $DOWNLOADER -download-path server.zip
+    fi
     extract_server_files
+    save_game_version
 fi
 
 # Check for cached authentication tokens
 if check_cached_tokens && load_cached_tokens; then
     echo "Using cached authentication - skipping login prompt"
+    refresh_authentication
 elif check_token_envs; then
     echo "Using envs for authentication - skipping login prompt"
 else
