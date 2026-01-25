@@ -108,7 +108,7 @@ check_cached_tokens() {
 
 # Function to check if envs from tokens exist
 check_token_envs() {
-    if [[ ! -z "HYTALE_SERVER_SESSION_TOKEN" && ! -z "HYTALE_SERVER_SESSION_TOKEN" ]]; then
+    if [[ ! -z "${HYTALE_SERVER_SESSION_TOKEN}" && ! -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
          return 1
     fi
 
@@ -331,15 +331,13 @@ fi
 if check_cached_tokens && load_cached_tokens; then
     echo "Using cached authentication - skipping login prompt"
     refresh_authentication
+    create_game_session
 elif check_token_envs; then
     echo "Using envs for authentication - skipping login prompt"
 else
     # Perform full authentication if no valid cache exists
     perform_authentication
 fi
-
-# Create game session
-create_game_session
 
 echo "Starting Hytale server..."
 
