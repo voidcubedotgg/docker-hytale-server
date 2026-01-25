@@ -1,7 +1,11 @@
 #!/bin/bash
 
+
 set -euo pipefail
 
+IDENTITY_TOKEN=""
+SESSION_TOKEN=""
+PROFILE_UUID=""
 GAME_VERSION_CACHE_FILE=".game_version"
 DOWNLOADER="hytale-downloader"
 AUTH_CACHE_FILE=".hytale-auth-tokens.json"
@@ -109,11 +113,11 @@ check_cached_tokens() {
 # Function to check if envs from tokens exist
 check_token_envs() {
     if [[ ! -z "${HYTALE_SERVER_SESSION_TOKEN}" && ! -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
-         return 1
+        return 0
     fi
 
     echo "✓ Found authentication tokens in system enviroment"
-    return 0
+    return 1
 }
 
 # Function to load cached tokens
@@ -301,7 +305,7 @@ check_game_version() {
     fi
 
     GAME_VERSION=$(cat $GAME_VERSION_CACHE_FILE)
-    if [ "$GAME_VERSION" != $(hytale-downloader -print-version) ]; then
+    if [ "$GAME_VERSION" != "2026.01.24-6e2d4fc36" ]; then
         echo "Game version is outdated!"
         return 0
     fi
@@ -389,9 +393,11 @@ if [ "${ENABLE_BACKUPS}" = "1" ]; then
 fi
 
 # Add session tokens and owner UUID
+if [ -z "${SESSION_TOKEN}" ] && [ -z "${IDENTITY_TOKEN}" ] && [ -z "${PROFILE_UUID}" ]; then
 JAVA_CMD="${JAVA_CMD} --session-token ${SESSION_TOKEN}"
 JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
 JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
+fi
 
 # Add bind address
 JAVA_CMD="${JAVA_CMD} --bind 0.0.0.0:${SERVER_PORT:-5520}"
