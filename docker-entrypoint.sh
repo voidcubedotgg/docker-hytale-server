@@ -393,7 +393,7 @@ if [ "${ENABLE_BACKUPS}" = "1" ]; then
 fi
 
 # Add session tokens and owner UUID
-if [ -z "${SESSION_TOKEN}" ] && [ -z "${IDENTITY_TOKEN}" ] && [ -z "${PROFILE_UUID}" ]; then
+if [ ! -z "${SESSION_TOKEN}" ] && [ ! -z "${IDENTITY_TOKEN}" ] && [ ! -z "${PROFILE_UUID}" ]; then
 JAVA_CMD="${JAVA_CMD} --session-token ${SESSION_TOKEN}"
 JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
 JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
