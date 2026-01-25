@@ -343,7 +343,6 @@ else
     perform_authentication
 fi
 
-
 echo "Starting Hytale server..."
 
 # Build the Java command
