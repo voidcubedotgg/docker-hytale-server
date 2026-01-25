@@ -8,7 +8,7 @@ FROM ${BASE_IMAGE} AS base
 ARG IMAGE_VERSION
 
 RUN microdnf install -y unzip jq curl && \
-    groupadd -r hytale && useradd -r -g hytale hytale
+    groupadd -r -g 1000 hytale && useradd -r -u 1000 -g hytale hytale
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
