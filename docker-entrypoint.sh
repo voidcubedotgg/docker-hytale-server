@@ -7,6 +7,7 @@ IDENTITY_TOKEN=""
 SESSION_TOKEN=""
 PROFILE_UUID=""
 GAME_VERSION_CACHE_FILE=".game_version"
+SKIP_GAME_DOWNLOAD=${SKIP_GAME_DOWNLOAD:-"false"}
 DOWNLOADER="hytale-downloader"
 AUTH_CACHE_FILE=".hytale-auth-tokens.json"
 ASSET_PACK="Assets.zip"
@@ -85,8 +86,6 @@ extract_server_files() {
         exit 1
     fi
 }
-
-
 
 # Function to check if cached tokens exist
 check_cached_tokens() {
@@ -299,13 +298,19 @@ perform_authentication() {
 }
 
 check_game_version() {
+    if [ "$SKIP_GAME_DOWNLOAD" == "true" ]; then
+        echo "✓ Skiping game download"
+        return 1
+    fi
+
     if [ ! -f "$GAME_VERSION_CACHE_FILE" ]; then
         echo "Game version file not found"
         return 0
     fi
 
-    GAME_VERSION=$(cat $GAME_VERSION_CACHE_FILE)
-    if [ "$GAME_VERSION" != "2026.01.24-6e2d4fc36" ]; then
+    CACHED_GAME_VERSION=$(cat $GAME_VERSION_CACHE_FILE)
+    GAME_VERSION=$($DOWNLOADER -print-version)
+    if [ "$CACHED_GAME_VERSION" != "$GAME_VERSION" ]; then
         echo "Game version is outdated!"
         return 0
     fi
@@ -315,7 +320,7 @@ check_game_version() {
 }
 
 save_game_version() {
-   GAME_VERSION=$(hytale-downloader -print-version)
+   GAME_VERSION=$($DOWNLOADER -print-version)
    echo "$GAME_VERSION" > $GAME_VERSION_CACHE_FILE
    echo "✓ Game version saved successfully!"
    echo ""
