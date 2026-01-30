@@ -112,7 +112,7 @@ check_cached_tokens() {
 
 # Function to check if envs from tokens exist
 check_token_envs() {
-    if [[ ! -z "${HYTALE_SERVER_SESSION_TOKEN}" && ! -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
+    if [[ -z "${HYTALE_SERVER_SESSION_TOKEN}" && -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
         return 0
     fi
 
