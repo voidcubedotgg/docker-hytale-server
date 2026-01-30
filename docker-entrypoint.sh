@@ -113,11 +113,11 @@ check_cached_tokens() {
 # Function to check if envs from tokens exist
 check_token_envs() {
     if [[ -z "${HYTALE_SERVER_SESSION_TOKEN}" && -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
-        return 0
+        return 1
     fi
 
     echo "✓ Found authentication tokens in system enviroment"
-    return 1
+    return 0
 }
 
 # Function to load cached tokens
