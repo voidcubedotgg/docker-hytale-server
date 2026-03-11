@@ -112,7 +112,8 @@ check_cached_tokens() {
 
 # Function to check if envs from tokens exist
 check_token_envs() {
-    if [[ -z "${HYTALE_SERVER_SESSION_TOKEN}" && -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
+    if [[ ! -z "${HYTALE_SERVER_SESSION_TOKEN}" || ! -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
+        echo "Warning: Not found authentication tokens in system enviroment"
         return 1
     fi
 
@@ -343,10 +344,10 @@ if check_cached_tokens && load_cached_tokens; then
     refresh_authentication
     create_game_session
 elif check_token_envs; then
-    echo "Using envs for authentication - skipping login prompt"
-else
-    # Perform full authentication if no valid cache exists
     perform_authentication
+    create_game_session
+else
+    echo "Skipping login prompt..."
 fi
 
 echo "Starting Hytale server..."
@@ -380,8 +381,6 @@ fi
 if [ "${ACCEPT_EARLY_PLUGINS}" = "1" ]; then
     JAVA_CMD="${JAVA_CMD} --accept-early-plugins"
 fi
-
-#JAVA_CMD="${JAVA_CMD} --auth-mode ${AUTH_MODE}"
 
 # Add allow-op flag if variable is set
 if [ "${ALLOW_OP}" = "1" ]; then
