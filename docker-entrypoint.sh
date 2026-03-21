@@ -354,7 +354,7 @@ fi
 echo "Starting Hytale server..."
 
 # Disable automatic updates
-export $HYTALE_DISABLE_UPDATES
+export HYTALE_DISABLE_UPDATES=${HYTALE_DISABLE_UPDATES}
 
 # Build the Java command
 JAVA_CMD="java"
