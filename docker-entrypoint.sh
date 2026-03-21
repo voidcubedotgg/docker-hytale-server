@@ -14,13 +14,16 @@ SKIP_GAME_DOWNLOAD=${SKIP_GAME_DOWNLOAD:-"0"}
 DOWNLOADER=${DOWNLOADER:-"hytale-downloader"}
 AUTH_CACHE_FILE=${AUTH_CACHE_FILE:-".hytale-auth-tokens.json"}
 ASSET_PACK=${ASSET_PACK:-"Assets.zip"}
-LEVERAGE_AHEAD_OF_TIME_CACHE=${LEVERAGE_AHEAD_OF_TIME_CACHE:-"1"}
+LEVERAGE_AHEAD_OF_TIME_CACHE=${LEVERAGE_AHEAD_OF_TIME_CACHE:-"0"}
+AHEAD_OF_TIME_CACHE_PATH=${AOTCACHE_PATH:-"HytaleServer.aot"}
 ACCEPT_EARLY_PLUGINS=${ACCEPT_EARLY_PLUGINS:-"0"}
 SERVER_MEMORY=${SERVER_MEMORY:-"4096"}
+SERVER_JAR_PATH=${SERVER_JAR:-"HytaleServer.jar"}
 DISABLE_SENTRY=${DISABLE_SENTRY:-"0"}
 ALLOW_OP=${ALLOW_OP:-"1"}
 ENABLE_BACKUPS=${ENABLE_BACKUPS:-"0"}
 BACKUP_FREQUENCY=${BACKUP_FREQUENCY:-"0"}
+BACKUP_DIR_PATH=${BACKUP_DIR:-"./backup"}
 JVM_ARGS=${JVM_ARGS:-""}
 
 # Decode base64 url
@@ -357,7 +360,7 @@ JAVA_CMD="java"
 
 # Add AOT cache if enabled
 if [ "${LEVERAGE_AHEAD_OF_TIME_CACHE}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} -XX:AOTCache=HytaleServer.aot"
+    JAVA_CMD="${JAVA_CMD} -XX:AOTCache=${AHEAD_OF_TIME_CACHE_PATH}"
 fi
 
 # Add max memory if set and greater than 0
@@ -370,7 +373,7 @@ if [ -n "${JVM_ARGS}" ]; then
     JAVA_CMD="${JAVA_CMD} ${JVM_ARGS}"
 fi
 
-JAVA_CMD="${JAVA_CMD} -jar HytaleServer.jar"
+JAVA_CMD="${JAVA_CMD} -jar ${SERVER_JAR_PATH}"
 
 # Add assets parameter if set and ends with .zip
 if [ -n "${ASSET_PACK}" ] && [[ "${ASSET_PACK}" == *.zip ]]; then
@@ -394,7 +397,7 @@ fi
 
 # Add backup parameters if enabled
 if [ "${ENABLE_BACKUPS}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} --backup --backup-dir ./backup --backup-frequency ${BACKUP_FREQUENCY}"
+    JAVA_CMD="${JAVA_CMD} --backup --backup-dir ${BACKUP_DIR_PATH} --backup-frequency ${BACKUP_FREQUENCY}"
 fi
 
 # Add session tokens and owner UUID
