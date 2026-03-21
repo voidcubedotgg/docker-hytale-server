@@ -373,7 +373,7 @@ if [ -n "${JVM_ARGS}" ]; then
     JAVA_CMD="${JAVA_CMD} ${JVM_ARGS}"
 fi
 
-JAVA_CMD="${JAVA_CMD} -jar ${SERVER_JAR}"
+JAVA_CMD="${JAVA_CMD} -jar ${SERVER_JAR_PATH}"
 
 # Add assets parameter if set and ends with .zip
 if [ -n "${ASSET_PACK}" ] && [[ "${ASSET_PACK}" == *.zip ]]; then
