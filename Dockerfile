@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="eclipse-temurin:25-jre-ubi10-minimal"
+ARG BASE_IMAGE="eclipse-temurin:25-jre-noble"
 ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.1.9"
 
 FROM ${DOWNLOADER_IMAGE} AS downloader
@@ -7,8 +7,9 @@ FROM ${BASE_IMAGE} AS base
 
 ARG IMAGE_VERSION
 
-RUN microdnf install -y unzip jq curl && \
-    groupadd -r -g 1000 hytale && useradd -r -u 1000 -g hytale hytale
+RUN apt-get update && apt-get install --no-install-recommends -y unzip jq curl && \
+    deluser ubuntu && groupadd -r -g 1000 hytale && useradd -r -u 1000 -g hytale hytale && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
