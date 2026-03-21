@@ -353,7 +353,7 @@ fi
 
 echo "Starting Hytale server..."
 
-# Disable automatic updates
+# Export automatic updates setting to Java process
 export HYTALE_DISABLE_UPDATES=${HYTALE_DISABLE_UPDATES}
 
 # Build the Java command
