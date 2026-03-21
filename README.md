@@ -9,6 +9,10 @@ docker run -it -d -p "5520:5520/udp" -v ./hytale-data:/data voidcube/hytale-serv
 
 ```
 
+## Automatic Updates
+
+Automatic updates are disabled by default (`HYTALE_DISABLE_UPDATES=1`). Updates are downloaded on container start when a new version is available. This approach aligns with the game's EULA and maintains Docker best practices for container lifecycle management.
+
 ## Building
 
 ```bash
