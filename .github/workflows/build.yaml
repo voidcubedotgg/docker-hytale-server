@@ -1,5 +1,7 @@
 name: Build and Push Docker Image
 
+
+
 on:
     push:
         branches:
@@ -11,6 +13,8 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        env:
+          BASE_IMAGE: eclipse-temurin:25-jre-noble
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -40,7 +44,7 @@ jobs:
                   push: ${{ github.event_name != 'pull_request' }}
                   tags: ${{ steps.meta.outputs.tags }}
                   build-args: |
-                      BASE_IMAGE=${{ vars.BASE_IMAGE }}
+                      BASE_IMAGE=${{ env.BASE_IMAGE }}
                       IMAGE_VERSION=${{ steps.meta.outputs.version }}
                   annotations: ${{ steps.meta.outputs.annotations }}
                   provenance: true
