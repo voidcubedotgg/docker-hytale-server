@@ -9,6 +9,10 @@ docker run -it -d -p "5520:5520/udp" -v ./hytale-data:/data voidcube/hytale-serv
 
 ```
 
+## Automatic Updates
+
+Automatic updates are disabled by default (`HYTALE_DISABLE_UPDATES=1`). This is intentional because Docker containers are immutable by design - updating the underlying game server would modify the container's filesystem, breaking the container lifecycle. Instead, updates are managed by rebuilding the Docker image with the latest version.
+
 ## Building
 
 ```bash
