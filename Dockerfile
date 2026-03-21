@@ -7,7 +7,7 @@ FROM ${BASE_IMAGE} AS base
 
 ARG IMAGE_VERSION
 
-RUN apt-get update && apt-get install -y unzip jq curl && \
+RUN apt-get update && apt-get install --no-install-recommends -y unzip jq curl && \
     deluser ubuntu && groupadd -r -g 1000 hytale && useradd -r -u 1000 -g hytale hytale && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
