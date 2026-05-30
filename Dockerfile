@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="eclipse-temurin:25-jre-noble"
+ARG BASE_IMAGE="eclipse-temurin:25.0.3_9-jre-noble"
 ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.1.18"
 
 FROM ${DOWNLOADER_IMAGE} AS downloader
