@@ -4,6 +4,7 @@ set -euo pipefail
 
 echo "Loading scripts..."
 
+# shellcheck source=scripts/sops.sh
 source /opt/voidcube/scripts/sops.sh
 
 echo "Done scripts loaded"
@@ -45,20 +46,27 @@ is_token_expired() {
     local token="$1"
 
     if [ -z "$token" ]; then
-        echo "Error: Can't validate token exipry. Token not provided."
+        echo "Error: Cannot validate token expiry. Token not provided." >&2
+        return 0
     fi
 
-    IFS='.' read -r header payload sig <<< "$token"
+    local payload
+    IFS='.' read -r _ payload _ <<< "$token"
 
+    local payload_json exp now
     payload_json=$(base64url_decode "$payload")
+    exp=$(echo "$payload_json" | jq -r '.exp // empty')
 
-    exp=$(echo "$payload_json" | jq -r '.exp')
-    now=$(date +%s)
-
-    if [ "$((now + 5*60))" -lt "$exp" ]; then
-        return 1
-    else
+    if ! [[ "$exp" =~ ^[0-9]+$ ]]; then
+        echo "Warning: Token has no valid exp claim, treating as expired." >&2
         return 0
+    fi
+
+    now=$(date +%s)
+    if [ "$((now + 5*60))" -lt "$exp" ]; then
+        return 1    # valid
+    else
+        return 0    # expired
     fi
 }
 
@@ -73,7 +81,7 @@ extract_server_files() {
         # Extract to current directory
         unzip -o "$SERVER_ZIP"
 
-        if [ $? -ne 0 ]; then
+        if ! unzip; then
             echo "Error: Failed to extract $SERVER_ZIP"
             exit 1
         fi
@@ -123,11 +131,11 @@ check_cached_tokens() {
 # Function to check if envs from tokens exist
 check_token_envs() {
     if [[ ! -z "${HYTALE_SERVER_SESSION_TOKEN}" || ! -z "${HYTALE_SERVER_IDENTITY_TOKEN}" ]]; then
-        echo "Warning: Not found authentication tokens in system enviroment"
+        echo "Warning: Not found authentication tokens in system environment"
         return 1
     fi
 
-    echo "✓ Found authentication tokens in system enviroment"
+    echo "✓ Found authentication tokens in system environment"
     return 0
 }
 
@@ -165,7 +173,7 @@ EOF
 }
 
 refresh_authentication() {
-    if is_token_expired $ACCESS_TOKEN; then
+    if is_token_expired "$ACCESS_TOKEN"; then
         echo "Refreshing Access Token"
        TOKEN_RESPONSE=$(curl -s -X POST "https://oauth.accounts.hytale.com/oauth2/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
@@ -244,7 +252,7 @@ perform_authentication() {
     # Step 2: Poll for access token
     ACCESS_TOKEN=""
     while [ -z "$ACCESS_TOKEN" ]; do
-        sleep $POLL_INTERVAL
+        sleep "$POLL_INTERVAL"
 
         TOKEN_RESPONSE=$(curl -s -X POST "https://oauth.accounts.hytale.com/oauth2/token" \
           -H "Content-Type: application/x-www-form-urlencoded" \
@@ -313,7 +321,7 @@ perform_authentication() {
 
 check_game_version() {
     if [ "$SKIP_GAME_DOWNLOAD" == "1" ]; then
-        echo "✓ Skiping game download"
+        echo "✓ Skipping game download"
         return 1
     fi
 
@@ -322,7 +330,7 @@ check_game_version() {
         return 0
     fi
 
-    CACHED_GAME_VERSION=$(cat $GAME_VERSION_CACHE_FILE)
+    CACHED_GAME_VERSION=$(cat "$GAME_VERSION_CACHE_FILE")
     GAME_VERSION=$($DOWNLOADER -print-version)
     if [ "$CACHED_GAME_VERSION" != "$GAME_VERSION" ]; then
         echo "Game version is outdated!"
@@ -335,7 +343,7 @@ check_game_version() {
 
 save_game_version() {
    GAME_VERSION=$($DOWNLOADER -print-version)
-   echo "$GAME_VERSION" > $GAME_VERSION_CACHE_FILE
+   echo "$GAME_VERSION" > "$GAME_VERSION_CACHE_FILE"
    echo "✓ Game version saved successfully!"
    echo ""
 }
