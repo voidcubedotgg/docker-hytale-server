@@ -350,7 +350,8 @@ if check_game_version; then
     extract_server_files
     save_game_version
 fi
-sops_encrypt_file "$DOWNLOADER_AUTH_CACHE_FILE"
+# Soft-fail: a re-encrypt failure must not abort the entrypoint (would leave creds plaintext + kill server)
+sops_encrypt_file "$DOWNLOADER_AUTH_CACHE_FILE" || echo "⚠ Warning: failed to re-encrypt $DOWNLOADER_AUTH_CACHE_FILE" >&2
 
 # Check for cached authentication tokens
 if check_cached_tokens && load_cached_tokens; then

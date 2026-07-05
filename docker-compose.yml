@@ -6,7 +6,9 @@ services:
       platforms: [linux/amd64]
     container_name: hytale-server
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     ports:
       - "5520:5520/udp"
     volumes:
