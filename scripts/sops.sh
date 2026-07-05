@@ -9,6 +9,7 @@ if [[ -n "$SOPS_AGE_KEY" && -n "$SOPS_AGE_RECIPIENT" ]]; then
     SOPS_ENABLED=1
 fi
 
+# Encrypt file using AGE encryption
 sops_encrypt_file() {
     file=$1
     if [[ $SOPS_ENABLED == 1 && -n $file && -f /data/${file} ]]; then
@@ -27,6 +28,7 @@ sops_encrypt_file() {
     fi
 }
 
+# Decrypt file using AGE encryption
 sops_decrypt_file() {
     file=$1
     if [[ $SOPS_ENABLED == 1 && -n $file && -f /data/${file} ]]; then
@@ -41,6 +43,7 @@ sops_decrypt_file() {
     fi
 }
 
+# Unset AGE key env vars before handing off to the server process
 sops_unset_envs() {
     unset SOPS_AGE_RECIPIENT
     unset SOPS_AGE_KEY
