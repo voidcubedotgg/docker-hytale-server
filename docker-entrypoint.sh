@@ -1,7 +1,12 @@
 #!/bin/bash
 
-
 set -euo pipefail
+
+echo "Loading scripts..."
+
+source /opt/voidcube/scripts/sops.sh
+
+echo "Done scripts loaded"
 
 IDENTITY_TOKEN=${IDENTITY_TOKEN:-""}
 SESSION_TOKEN=${SESSION_TOKEN:-""}
@@ -14,6 +19,7 @@ GAME_VERSION_CACHE_FILE=${GAME_VERSION_CACHE_FILE:-".game_version"}
 SKIP_GAME_DOWNLOAD=${SKIP_GAME_DOWNLOAD:-"0"}
 DOWNLOADER=${DOWNLOADER:-"hytale-downloader"}
 AUTH_CACHE_FILE=${AUTH_CACHE_FILE:-".hytale-auth-tokens.json"}
+DOWNLOADER_AUTH_CACHE_FILE=${DOWNLOADER_AUTH_CACHE_FILE:-".hytale-downloader-credentials.json"}
 ASSET_PACK=${ASSET_PACK:-"Assets.zip"}
 LEVERAGE_AHEAD_OF_TIME_CACHE=${LEVERAGE_AHEAD_OF_TIME_CACHE:-"0"}
 AHEAD_OF_TIME_CACHE_PATH=${AOTCACHE_PATH:-"HytaleServer.aot"}
@@ -127,6 +133,7 @@ check_token_envs() {
 
 # Function to load cached tokens
 load_cached_tokens() {
+    sops_decrypt_file "$AUTH_CACHE_FILE"
     ACCESS_TOKEN=$(jq -r '.access_token' "$AUTH_CACHE_FILE")
     REFRESH_TOKEN=$(jq -r '.refresh_token' "$AUTH_CACHE_FILE")
     PROFILE_UUID=$(jq -r '.profile_uuid' "$AUTH_CACHE_FILE")
@@ -153,6 +160,7 @@ save_auth_tokens() {
   "timestamp": $(date +%s)
 }
 EOF
+    sops_encrypt_file "$AUTH_CACHE_FILE"
     echo "✓ Authentication tokens cached for future use"
 }
 
@@ -333,6 +341,7 @@ save_game_version() {
 }
 
 # Check if server files were downloaded correctly
+sops_decrypt_file "$DOWNLOADER_AUTH_CACHE_FILE"
 if check_game_version; then
     if [ ! -f "server.zip" ]; then
         echo "Starting Hytale downloader..."
@@ -341,6 +350,8 @@ if check_game_version; then
     extract_server_files
     save_game_version
 fi
+# Soft-fail: a re-encrypt failure must not abort the entrypoint (would leave creds plaintext + kill server)
+sops_encrypt_file "$DOWNLOADER_AUTH_CACHE_FILE" || echo "⚠ Warning: failed to re-encrypt $DOWNLOADER_AUTH_CACHE_FILE" >&2
 
 # Check for cached authentication tokens
 if check_cached_tokens && load_cached_tokens; then
@@ -353,6 +364,8 @@ elif check_token_envs; then
 else
     echo "Skipping login prompt..."
 fi
+
+sops_unset_envs
 
 echo "Starting Hytale server..."
 
