@@ -1,8 +1,12 @@
 services:
   hytale-server:
     image: voidcube/hytale-server
+    build:
+      context: .
+      platforms: [linux/amd64]
     container_name: hytale-server
     restart: unless-stopped
+    env_file: .env
     ports:
       - "5520:5520/udp"
     volumes:

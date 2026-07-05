@@ -1,5 +1,8 @@
 ARG BASE_IMAGE="eclipse-temurin:25.0.3_9-jre-noble"
 ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.5.30"
+ARG SOPS_IMAGE="ghcr.io/getsops/sops:v3.13.2-alpine"
+
+FROM ${SOPS_IMAGE} as sops
 
 FROM ${DOWNLOADER_IMAGE} AS downloader
 
@@ -12,8 +15,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y unzip jq curl &
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY scripts/ /opt/voidcube/scripts/
 
-COPY --from=downloader /bin/hytale-downloader /usr/local/bin
+COPY --from=downloader /bin/hytale-downloader /usr/local/bin/hytale-downloader
+COPY --from=sops /usr/local/bin/sops /usr/local/bin/sops
 
 USER hytale
 
