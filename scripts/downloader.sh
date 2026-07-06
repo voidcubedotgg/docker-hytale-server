@@ -36,9 +36,9 @@ downloader_save_game_version() {
 # Get Hytale files from CDN
 downloader_download_files() {
     if [ "$DOWNLOADER_ENABLED" == "1" ]; then
-        rm server.zip
+        rm -f server.zip
         log_info "Starting Hytale downloader..."
-        $DOWNLOADER -download-path server.zip
+        $DOWNLOADER_CMD -download-path server.zip
     fi
 }
 
@@ -51,9 +51,7 @@ downloader_extract_server_files() {
         log_info "Found server archive: $SERVER_ZIP"
 
         # Extract to current directory
-        unzip -o "$SERVER_ZIP"
-
-        if ! unzip; then
+        if ! unzip -o "$SERVER_ZIP"; then
             log_die "Failed to extract $SERVER_ZIP"
         fi
 

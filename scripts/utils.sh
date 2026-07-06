@@ -3,7 +3,7 @@
 base64url_decode() {
   local b64="$1"
   while (( ${#b64} % 4 != 0 )); do b64+="="; done
-  echo "$b64" | tr '_-' '/+' | base64 -d 2>/dev/null
+  printf '%s' "$b64" | tr '_-' '/+' | base64 -d 2>/dev/null
 }
 
 # Validate is JWT token expired
