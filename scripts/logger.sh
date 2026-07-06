@@ -1,17 +1,4 @@
 # shellcheck shell=bash
-# Structured logging for entrypoint scripts.
-#
-# Levels (low -> high): debug, info, warn, error
-# Set LOG_LEVEL to the lowest level you want emitted (default: info).
-# Set LOG_NO_COLOR=1 to disable ANSI colors (auto-disabled when stderr is not a TTY).
-#
-# Usage:
-#   log_debug "verbose detail"
-#   log_info  "normal progress"
-#   log_warn  "recoverable problem"
-#   log_error "fatal problem"
-#   log_die   "message"   # log at error level then exit 1
-
 LOG_LEVEL=${LOG_LEVEL:-"info"}
 
 # Map level name -> numeric severity
