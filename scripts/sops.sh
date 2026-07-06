@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 SOPS_AGE_KEY=${SOPS_AGE_KEY:-""}
 SOPS_AGE_RECIPIENT=${SOPS_AGE_RECIPIENT:-""}
 SOPS_ENABLED=${SOPS_ENABLED:-""}
@@ -24,15 +25,15 @@ sops_encrypt_file() {
     local file="$1"
     if [[ $SOPS_ENABLED == 1 && -n $file && -f /data/${file} ]]; then
         if [ -z "$SOPS_AGE_RECIPIENT" ]; then
-            echo "✗ SOPS_AGE_RECIPIENT (age public key) not set, cannot encrypt $file" >&2
+            log_error "SOPS_AGE_RECIPIENT (age public key) not set, cannot encrypt $file"
             return 1
         fi
         if sops_is_encrypted "/data/${file}"; then
-            echo "• File $file already encrypted, skipping"
+            log_info "File $file already encrypted, skipping"
         elif $SOPS_CMD encrypt --age "$SOPS_AGE_RECIPIENT" --in-place "/data/${file}"; then
-            echo "✓ File $file encrypted"
+            log_info "File $file encrypted"
         else
-            echo "✗ Encrypt failed for $file" >&2
+            log_error "Encrypt failed for $file"
             return 1
         fi
     fi
@@ -43,11 +44,11 @@ sops_decrypt_file() {
     local file="$1"
     if [[ $SOPS_ENABLED == 1 && -n $file && -f /data/${file} ]]; then
         if ! sops_is_encrypted "/data/${file}"; then
-            echo "• File $file not encrypted, skipping"
+            log_info "File $file not encrypted, skipping"
         elif $SOPS_CMD decrypt --in-place "/data/${file}"; then
-            echo "✓ File $file decrypted"
+            log_info "File $file decrypted"
         else
-            echo "✗ Decrypt failed for $file" >&2
+            log_error "Decrypt failed for $file"
             return 1
         fi
     fi
