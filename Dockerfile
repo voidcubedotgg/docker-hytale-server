@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="eclipse-temurin:25.0.3_9-jre-noble"
+ARG BASE_IMAGE="eclipse-temurin:25.0.4_7-jre-noble"
 ARG DOWNLOADER_IMAGE="voidcube/hytale-downloader:2026.5.30"
 ARG SOPS_IMAGE="ghcr.io/getsops/sops:v3.13.3-alpine"
 
