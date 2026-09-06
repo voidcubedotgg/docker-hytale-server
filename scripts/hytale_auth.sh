@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 HYTALE_SERVER_SESSION_TOKEN=${HYTALE_SERVER_SESSION_TOKEN:-""}
 HYTALE_SERVER_IDENTITY_TOKEN=${HYTALE_SERVER_IDENTITY_TOKEN:-""}
+HYTALE_GAME_PROFILE=${HYTALE_GAME_PROFILE:-""}
 HYTALE_AUTH_CACHE_FILE=${HYTALE_AUTH_CACHE_FILE:-".hytale-auth-tokens.json"}
 HYTALE_AUTH_ENABLED=${HYTALE_AUTH_ENABLED-:-"1"}
 
@@ -179,20 +180,20 @@ hytale_auth_perform_device_flow() {
         log_die "No game profiles found. You need to purchase Hytale to run a server."
     fi
 
-    # Select profile based on GAME_PROFILE variable
-    if [ -n "$GAME_PROFILE" ]; then
+    # Select profile based on HYTALE_GAME_PROFILE variable
+    if [ -n "$HYTALE_GAME_PROFILE" ]; then
         # User specified a profile username, find matching UUID
-        log_info "Looking for profile: $GAME_PROFILE"
-        PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r ".profiles[] | select(.username == \"$GAME_PROFILE\") | .uuid")
+        log_info "Looking for profile: $HYTALE_GAME_PROFILE"
+        PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r ".profiles[] | select(.username == \"$HYTALE_GAME_PROFILE\") | .uuid")
 
         if [ -z "$PROFILE_UUID" ] || [ "$PROFILE_UUID" = "null" ]; then
-            log_error "Profile '$GAME_PROFILE' not found."
+            log_error "Profile '$HYTALE_GAME_PROFILE' not found."
             log_error "Available profiles:"
             echo "$PROFILES_RESPONSE" | jq -r '.profiles[] | "  - \(.username)"' >&2
             exit 1
         fi
 
-        log_info "Using profile: $GAME_PROFILE (UUID: $PROFILE_UUID)"
+        log_info "Using profile: $HYTALE_GAME_PROFILE (UUID: $PROFILE_UUID)"
     else
         # Use first profile from the list
         PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r '.profiles[0].uuid')
