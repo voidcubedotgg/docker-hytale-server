@@ -38,11 +38,11 @@ hytale_auth_load_cached_tokens() {
     sops_decrypt_file "$HYTALE_AUTH_CACHE_FILE"
     ACCESS_TOKEN=$(jq -r '.access_token' "$HYTALE_AUTH_CACHE_FILE")
     REFRESH_TOKEN=$(jq -r '.refresh_token' "$HYTALE_AUTH_CACHE_FILE")
-    PROFILE_UUID=$(jq -r '.profile_uuid' "$HYTALE_AUTH_CACHE_FILE")
+    HYTALE_PROFILE_UUID=$(jq -r '.profile_uuid' "$HYTALE_AUTH_CACHE_FILE")
     
     # Validate all required tokens are present
     if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ] || \
-       [ -z "$PROFILE_UUID" ] || [ "$PROFILE_UUID" = "null" ]; then
+       [ -z "$HYTALE_PROFILE_UUID" ] || [ "$HYTALE_PROFILE_UUID" = "null" ]; then
         log_error "Incomplete cached tokens, re-authenticating..."
         rm "$HYTALE_AUTH_CACHE_FILE"
         return 1
@@ -58,7 +58,7 @@ hytale_auth_save_tokens() {
 {
   "access_token": "$ACCESS_TOKEN",
   "refresh_token": "$REFRESH_TOKEN",
-  "profile_uuid": "$PROFILE_UUID",
+  "profile_uuid": "$HYTALE_PROFILE_UUID",
   "timestamp": $(date +%s)
 }
 EOF
@@ -89,7 +89,7 @@ hytale_auth_create_game_session() {
     SESSION_RESPONSE=$(curl -s -X POST "https://sessions.hytale.com/game-session/new" \
        -H "Authorization: Bearer $ACCESS_TOKEN" \
        -H "Content-Type: application/json" \
-       -d "{\"uuid\": \"${PROFILE_UUID}\"}")
+       -d "{\"uuid\": \"${HYTALE_PROFILE_UUID}\"}")
     
     # Validate JSON response
     if ! echo "$SESSION_RESPONSE" | jq empty 2>/dev/null; then
@@ -97,9 +97,9 @@ hytale_auth_create_game_session() {
         log_error "Response: $SESSION_RESPONSE"
     fi
     # Extract session and identity tokens
-    SESSION_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.sessionToken')
-    IDENTITY_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.identityToken')
-    if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ] || [ -z "$IDENTITY_TOKEN" ] || [ "$IDENTITY_TOKEN" == "null" ]; then
+    HYTALE_SERVER_SESSION_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.sessionToken')
+    HYTALE_SERVER_IDENTITY_TOKEN=$(echo "$SESSION_RESPONSE" | jq -r '.identityToken')
+    if [ -z "$HYTALE_SERVER_SESSION_TOKEN" ] || [ "$HYTALE_SERVER_SESSION_TOKEN" = "null" ] || [ -z "$HYTALE_SERVER_IDENTITY_TOKEN" ] || [ "$HYTALE_SERVER_IDENTITY_TOKEN" == "null" ]; then
         log_error "Failed to refresh game server session"
         log_error "Response: $SESSION_RESPONSE"
         exit 1
@@ -185,19 +185,19 @@ hytale_auth_perform_device_flow() {
     if [ -n "$HYTALE_GAME_PROFILE" ]; then
         # User specified a profile username, find matching UUID
         log_info "Looking for profile: $HYTALE_GAME_PROFILE"
-        PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r ".profiles[] | select(.username == \"$HYTALE_GAME_PROFILE\") | .uuid")
+        HYTALE_PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r ".profiles[] | select(.username == \"$HYTALE_GAME_PROFILE\") | .uuid")
 
-        if [ -z "$PROFILE_UUID" ] || [ "$PROFILE_UUID" = "null" ]; then
+        if [ -z "$HYTALE_PROFILE_UUID" ] || [ "$HYTALE_PROFILE_UUID" = "null" ]; then
             log_error "Profile '$HYTALE_GAME_PROFILE' not found."
             log_error "Available profiles:"
             echo "$PROFILES_RESPONSE" | jq -r '.profiles[] | "  - \(.username)"' >&2
             exit 1
         fi
 
-        log_info "Using profile: $HYTALE_GAME_PROFILE (UUID: ${PROFILE_UUID})"
+        log_info "Using profile: $HYTALE_GAME_PROFILE (UUID: ${HYTALE_PROFILE_UUID})"
     else
         # Use first profile from the list
-        PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r '.profiles[0].uuid')
+        HYTALE_PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r '.profiles[0].uuid')
         PROFILE_USERNAME=$(echo "$PROFILES_RESPONSE" | jq -r '.profiles[0].username')
 
         log_info "Using default profile: $PROFILE_USERNAME (UUID: $HYTALE_PROFILE_UUID)"
