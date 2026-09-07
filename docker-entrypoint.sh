@@ -105,10 +105,10 @@ if [ "${ENABLE_BACKUPS}" = "1" ]; then
 fi
 
 # Add session tokens and owner UUID
-if [ -n "${SESSION_TOKEN:-}" ] && [ -n "${IDENTITY_TOKEN:-}" ] && [ -n "${PROFILE_UUID:-}" ]; then
-JAVA_CMD="${JAVA_CMD} --session-token ${SESSION_TOKEN}"
-JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
-JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
+if [ -n "${HYTALE_SERVER_SESSION_TOKEN:-}" ] && [ -n "${HYTALE_SERVER_IDENTITY_TOKEN:-}" ] && [ -n "${HYTALE_PROFILE_UUID:-}" ]; then
+JAVA_CMD="${JAVA_CMD} --session-token ${HYTALE_SERVER_SESSION_TOKEN}"
+JAVA_CMD="${JAVA_CMD} --identity-token ${HYTALE_SERVER_IDENTITY_TOKEN}"
+JAVA_CMD="${JAVA_CMD} --owner-uuid ${HYTALE_PROFILE_UUID}"
 fi
 
 # Add bind address

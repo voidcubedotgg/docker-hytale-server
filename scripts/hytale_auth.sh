@@ -2,6 +2,7 @@
 HYTALE_SERVER_SESSION_TOKEN=${HYTALE_SERVER_SESSION_TOKEN:-""}
 HYTALE_SERVER_IDENTITY_TOKEN=${HYTALE_SERVER_IDENTITY_TOKEN:-""}
 HYTALE_GAME_PROFILE=${HYTALE_GAME_PROFILE:-""}
+HYTALE_PROFILE_UUID=${HYTALE_PROFILE_UUID:-""}
 HYTALE_AUTH_CACHE_FILE=${HYTALE_AUTH_CACHE_FILE:-".hytale-auth-tokens.json"}
 HYTALE_AUTH_ENABLED=${HYTALE_AUTH_ENABLED:-"1"}
 
@@ -193,13 +194,13 @@ hytale_auth_perform_device_flow() {
             exit 1
         fi
 
-        log_info "Using profile: $HYTALE_GAME_PROFILE (UUID: $PROFILE_UUID)"
+        log_info "Using profile: $HYTALE_GAME_PROFILE (UUID: ${PROFILE_UUID})"
     else
         # Use first profile from the list
         PROFILE_UUID=$(echo "$PROFILES_RESPONSE" | jq -r '.profiles[0].uuid')
         PROFILE_USERNAME=$(echo "$PROFILES_RESPONSE" | jq -r '.profiles[0].username')
 
-        log_info "Using default profile: $PROFILE_USERNAME (UUID: $PROFILE_UUID)"
+        log_info "Using default profile: $PROFILE_USERNAME (UUID: $HYTALE_PROFILE_UUID)"
     fi
 
     # Save tokens for future use
