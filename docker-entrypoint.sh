@@ -115,4 +115,4 @@ fi
 JAVA_CMD="${JAVA_CMD} --bind 0.0.0.0:${SERVER_PORT:-5520}"
 
 # Execute the command
-exec $JAVA_CMD
+exec "$JAVA_CMD"
