@@ -60,59 +60,60 @@ log_info "Starting Hytale server..."
 export HYTALE_DISABLE_UPDATES=${HYTALE_DISABLE_UPDATES}
 
 # Build the Java command
-JAVA_CMD="java"
+JAVA_CMD=(java)
 
 # Add AOT cache if enabled
 if [ "${LEVERAGE_AHEAD_OF_TIME_CACHE}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} -XX:AOTCache=${AHEAD_OF_TIME_CACHE_PATH}"
+    JAVA_CMD+=("-XX:AOTCache=${AHEAD_OF_TIME_CACHE_PATH}")
 fi
 
 # Add max memory if set and greater than 0
 if [ -n "${SERVER_MEMORY}" ] && [ "${SERVER_MEMORY}" -gt 0 ] 2>/dev/null; then
-    JAVA_CMD="${JAVA_CMD} -Xms${SERVER_MEMORY}M -Xmx${SERVER_MEMORY}M"
+    JAVA_CMD+=("-Xms${SERVER_MEMORY}M" "-Xmx${SERVER_MEMORY}M")
 fi
 
 # Add JVM arguments if set
 if [ -n "${JVM_ARGS}" ]; then
-    JAVA_CMD="${JAVA_CMD} ${JVM_ARGS}"
+    read -ra JVM_ARGS_ARRAY <<< "${JVM_ARGS}"
+    JAVA_CMD+=("${JVM_ARGS_ARRAY[@]}")
 fi
 
-JAVA_CMD="${JAVA_CMD} -jar ${SERVER_JAR_PATH}"
+JAVA_CMD+=("-jar" "${SERVER_JAR_PATH}")
 
 # Add assets parameter if set and ends with .zip
 if [ -n "${ASSET_PACK}" ] && [[ "${ASSET_PACK}" == *.zip ]]; then
-    JAVA_CMD="${JAVA_CMD} --assets ${ASSET_PACK}"
+    JAVA_CMD+=("--assets" "${ASSET_PACK}")
 fi
 
 # Add accept-early-plugins flag if variable is set
 if [ "${ACCEPT_EARLY_PLUGINS}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} --accept-early-plugins"
+    JAVA_CMD+=("--accept-early-plugins")
 fi
 
 # Add allow-op flag if variable is set
 if [ "${ALLOW_OP}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} --allow-op"
+    JAVA_CMD+=("--allow-op")
 fi
 
 # Add disable-sentry flag if enabled
 if [ "${DISABLE_SENTRY}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} --disable-sentry"
+    JAVA_CMD+=("--disable-sentry")
 fi
 
 # Add backup parameters if enabled
 if [ "${ENABLE_BACKUPS}" = "1" ]; then
-    JAVA_CMD="${JAVA_CMD} --backup --backup-dir ${BACKUP_DIR_PATH} --backup-frequency ${BACKUP_FREQUENCY}"
+    JAVA_CMD+=("--backup" "--backup-dir" "${BACKUP_DIR_PATH}" "--backup-frequency" "${BACKUP_FREQUENCY}")
 fi
 
 # Add session tokens and owner UUID
-if [ -n "${SESSION_TOKEN:-}" ] && [ -n "${IDENTITY_TOKEN:-}" ] && [ -n "${PROFILE_UUID:-}" ]; then
-JAVA_CMD="${JAVA_CMD} --session-token ${SESSION_TOKEN}"
-JAVA_CMD="${JAVA_CMD} --identity-token ${IDENTITY_TOKEN}"
-JAVA_CMD="${JAVA_CMD} --owner-uuid ${PROFILE_UUID}"
+if [ -n "${HYTALE_SERVER_SESSION_TOKEN:-}" ] && [ -n "${HYTALE_SERVER_IDENTITY_TOKEN:-}" ] && [ -n "${HYTALE_PROFILE_UUID:-}" ]; then
+    JAVA_CMD+=("--session-token" "${HYTALE_SERVER_SESSION_TOKEN}")
+    JAVA_CMD+=("--identity-token" "${HYTALE_SERVER_IDENTITY_TOKEN}")
+    JAVA_CMD+=("--owner-uuid" "${HYTALE_PROFILE_UUID}")
 fi
 
 # Add bind address
-JAVA_CMD="${JAVA_CMD} --bind 0.0.0.0:${SERVER_PORT:-5520}"
+JAVA_CMD+=("--bind" "0.0.0.0:${SERVER_PORT:-5520}")
 
 # Execute the command
-exec $JAVA_CMD
+exec "${JAVA_CMD[@]}"
